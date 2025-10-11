@@ -23,11 +23,11 @@ int main(){
         printf("ALLOCATED FROM RESOURCE 3:");
         scanf("%d",&rc[i][2]);
     }
-    printf("ENTER TOTAL VALUES OF RESOURCE 1:");
+    printf("ENTER TOTAL VALUE OF RESOURCE 1:");
     scanf("%d",&tt[0]);
-    printf("ENTER TOTAL VALUES OF RESOURCE 2:");
+    printf("ENTER TOTAL VALUE OF RESOURCE 2:");
     scanf("%d",&tt[1]);
-    printf("ENTER TOTAL VALUES OF RESOURCE 3:");
+    printf("ENTER TOTAL VALUE OF RESOURCE 3:");
     scanf("%d",&tt[2]);
     printf("RESOURCES  ALLOCATED   NEEDED   TOTAL  AVAIL\n");
     printf("P1 \t322\t100\t222\t936    112\n");
@@ -42,3 +42,4 @@ int main(){
     printf("THE ABOVE SEQUENCE IS A SAFE SEQUENCE\n");
     return 0;
 }
+
