@@ -1,0 +1,192 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_PROCESSES 100
+
+typedef struct {
+    int pid;
+    int arrival;
+    int burst;
+    int remaining;
+    int completion;
+    int waiting;
+    int turnaround;
+    int queue_level;  // 0,1,2 (0 highest)
+    int last_executed; // last time the process was run
+    int finished;
+} Process;
+
+typedef struct Node {
+    int pid;
+    struct Node* next;
+} Node;
+
+typedef struct {
+    Node* front;
+    Node* rear;
+} Queue;
+
+void initQueue(Queue* q) {
+    q->front = NULL;
+    q->rear = NULL;
+}
+
+int isEmpty(Queue* q) {
+    return q->front == NULL;
+}
+
+void enqueue(Queue* q, int pid) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->pid = pid;
+    newNode->next = NULL;
+    if (q->rear == NULL) {
+        q->front = newNode;
+        q->rear = newNode;
+    } else {
+        q->rear->next = newNode;
+        q->rear = newNode;
+    }
+}
+
+int dequeue(Queue* q) {
+    if (isEmpty(q)) return -1;
+    Node* temp = q->front;
+    int pid = temp->pid;
+    q->front = temp->next;
+    if (q->front == NULL) q->rear = NULL;
+    free(temp);
+    return pid;
+}
+
+int main() {
+    int n;
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    Process p[MAX_PROCESSES];
+
+    for (int i = 0; i < n; i++) {
+        printf("Enter arrival time and burst time for process %d: ", i+1);
+        scanf("%d %d", &p[i].arrival, &p[i].burst);
+        p[i].pid = i + 1;
+        p[i].remaining = p[i].burst;
+        p[i].completion = 0;
+        p[i].waiting = 0;
+        p[i].turnaround = 0;
+        p[i].queue_level = 0;
+        p[i].last_executed = -1;
+        p[i].finished = 0;
+    }
+
+    // Time quantums
+    int tq[3] = {8, 16, 32};
+
+    Queue q[3];
+    for (int i = 0; i < 3; i++) initQueue(&q[i]);
+
+    int time = 0;
+    int completed = 0;
+    int current_pid = -1;
+    int current_queue = -1;
+    int time_slice = 0; // how much time current process has run in its quantum
+
+    // We track which processes have arrived and put them in queue 0 when they arrive
+    int arrived[MAX_PROCESSES] = {0};
+
+    // Simulation loop
+    while (completed < n) {
+        // Check arrival of processes at current time and add to highest priority queue (queue 0)
+        for (int i = 0; i < n; i++) {
+            if (!arrived[i] && p[i].arrival <= time) {
+                enqueue(&q[0], p[i].pid);
+                arrived[i] = 1;
+            }
+        }
+
+        // If no current process running, pick next from highest non-empty queue
+        if (current_pid == -1) {
+            int found = 0;
+            for (int i = 0; i < 3; i++) {
+                if (!isEmpty(&q[i])) {
+                    current_pid = dequeue(&q[i]);
+                    current_queue = i;
+                    time_slice = 0;
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found) {
+                // no process ready, advance time to next arrival if any
+                int min_arrival = -1;
+                for (int i = 0; i < n; i++) {
+                    if (!arrived[i]) {
+                        if (min_arrival == -1 || p[i].arrival < min_arrival) {
+                            min_arrival = p[i].arrival;
+                        }
+                    }
+                }
+                if (min_arrival == -1) break; // no more processes
+                time = min_arrival;
+                continue;
+            }
+        }
+
+        // Execute current process for 1 unit time
+        p[current_pid - 1].remaining--;
+        time++;
+        time_slice++;
+
+        // Check if any new process arrives at this time and enqueue at highest priority
+        for (int i = 0; i < n; i++) {
+            if (!arrived[i] && p[i].arrival <= time) {
+                enqueue(&q[0], p[i].pid);
+                arrived[i] = 1;
+            }
+        }
+
+        // If process finished
+        if (p[current_pid - 1].remaining == 0) {
+            p[current_pid - 1].completion = time;
+            p[current_pid - 1].turnaround = p[current_pid - 1].completion - p[current_pid - 1].arrival;
+            p[current_pid - 1].waiting = p[current_pid - 1].turnaround - p[current_pid - 1].burst;
+            p[current_pid - 1].finished = 1;
+            completed++;
+            current_pid = -1;
+            current_queue = -1;
+            time_slice = 0;
+        }
+        else if (time_slice == tq[current_queue]) {
+            // Time quantum expired and process not finished -> demote and enqueue at lower queue
+            if (current_queue < 2) {
+                enqueue(&q[current_queue + 1], current_pid);
+                p[current_pid - 1].queue_level = current_queue + 1;
+            } else {
+                // Already in lowest queue, just enqueue back to same queue
+                enqueue(&q[current_queue], current_pid);
+            }
+            current_pid = -1;
+            current_queue = -1;
+            time_slice = 0;
+        }
+    }
+
+    // Output results
+    printf("PID\tArrival\tBurst\tWaiting\tCompletion\tTurnaround\n");
+    double total_wt = 0, total_tat = 0;
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\n",
+            p[i].pid,
+            p[i].arrival,
+            p[i].burst,
+            p[i].waiting,
+            p[i].completion,
+            p[i].turnaround);
+        total_wt += p[i].waiting;
+        total_tat += p[i].turnaround;
+    }
+
+    printf("Average Waiting Time: %.2lf\n", total_wt / n);
+    printf("Average Turnaround Time: %.2lf\n", total_tat / n);
+
+    return 0;
+}
