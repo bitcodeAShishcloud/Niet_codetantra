@@ -1,0 +1,107 @@
+#include <stdio.h>
+
+#define N 5
+
+// States of philosophers
+enum { THINKING, HUNGRY, EATING } state[N];
+
+// Chopstick availability: 0 = free, 1 = taken
+int chopstick[N];
+
+// Function declarations
+void test(int phil);
+void pickup(int phil);
+void putdown(int phil);
+int left(int phil);
+int right(int phil);
+
+// Returns index of left philosopher
+int left(int phil) {
+    return (phil + N - 1) % N;
+}
+
+// Returns index of right philosopher
+int right(int phil) {
+    return (phil + 1) % N;
+}
+
+// Check if philosopher can eat
+void test(int phil) {
+    if (state[phil] == HUNGRY &&
+        state[left(phil)] != EATING &&
+        state[right(phil)] != EATING &&
+        chopstick[phil] == 0 &&
+        chopstick[right(phil)] == 0) {
+        
+        state[phil] = EATING;
+        chopstick[phil] = 1;
+        chopstick[right(phil)] = 1;
+        printf("Philosopher %d starts eating\n", phil);
+    } else if (state[phil] == HUNGRY) {
+        printf("Philosopher %d cannot eat now\n", phil);
+    }
+}
+
+// When philosopher becomes hungry
+void pickup(int phil) {
+    printf("Philosopher %d is now hungry\n", phil);
+    state[phil] = HUNGRY;
+    test(phil);
+}
+
+// When philosopher finishes eating
+void putdown(int phil) {
+    if (state[phil] == EATING) {
+        state[phil] = THINKING;
+        chopstick[phil] = 0;
+        chopstick[right(phil)] = 0;
+        printf("Philosopher %d stops eating and starts thinking\n", phil);
+    } else {
+        printf("Philosopher %d was not eating\n", phil);
+    }
+}
+
+int main() {
+    int choice, phil;
+
+    for (int i = 0; i < N; i++) {
+        state[i] = THINKING;
+        chopstick[i] = 0;
+    }
+
+    printf("Choices:\n1. Philosopher hungry\n2. Philosopher puts down chopsticks\n3. Exit\n");
+
+    while (1) {
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+        if (choice == 3) break;
+
+        if (choice == 1) {
+            printf("Which philosopher (0-%d) is hungry: ", N - 1);
+            scanf("%d", &phil);
+            pickup(phil);
+        } 
+        else if (choice == 2) {
+            printf("Which philosopher (0-%d) puts down chopsticks: ", N - 1);
+            scanf("%d", &phil);
+            putdown(phil);
+        } 
+        else {
+            printf("Invalid choice\n");
+            continue;
+        }
+
+        printf("States:\n");
+        for (int i = 0; i < N; i++) {
+            const char* s = state[i] == THINKING ? "Thinking" :
+                            state[i] == HUNGRY ? "Hungry" : "Eating";
+            printf("Philosopher %d: %s\n", i, s);
+        }
+
+        printf("Chopsticks:\n");
+        for (int i = 0; i < N; i++) {
+            printf("Chopstick %d: %s\n", i, chopstick[i] ? "Taken" : "Free");
+        }
+    }
+    return 0;
+}
