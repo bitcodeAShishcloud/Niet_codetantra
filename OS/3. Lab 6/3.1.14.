@@ -1,0 +1,43 @@
+#include <stdio.h>
+
+#define LOGICAL_ADDRESS_SPACE 1024
+#define PAGE_SIZE 128
+#define NUM_PAGES (LOGICAL_ADDRESS_SPACE / PAGE_SIZE)
+#define NUM_FRAMES 8
+
+int main() {
+    int pageTable[NUM_PAGES] = {3, 5, 1, 7, 2, 6, 0, 4};
+    int logicalAddress;
+
+    printf("Logical Address Space = %d bytes\n", LOGICAL_ADDRESS_SPACE);
+    printf("Page Size = %d bytes\n", PAGE_SIZE);
+    printf("Number of Pages = %d\n", NUM_PAGES);
+    printf("Number of Frames = %d\n", NUM_FRAMES);
+    printf("Page Table:\n");
+
+    for (int i = 0; i < NUM_PAGES; i++) {
+        printf("Page %d -> Frame %d\n", i, pageTable[i]);
+    }
+
+    printf("Enter a logical address (0 - %d): ", LOGICAL_ADDRESS_SPACE - 1);
+    scanf("%d", &logicalAddress);
+
+    if (logicalAddress < 0 || logicalAddress >= LOGICAL_ADDRESS_SPACE) {
+        printf("Invalid logical address\n");
+        return 1;
+    }
+
+    int pageNumber = logicalAddress / PAGE_SIZE;
+    int offset = logicalAddress % PAGE_SIZE;
+    int frameNumber = pageTable[pageNumber];
+    int physicalAddress = (frameNumber * PAGE_SIZE) + offset;
+
+    printf("Logical Address %d is in:\n", logicalAddress);
+    printf("Page Number = %d\n", pageNumber);
+    printf("Offset = %d\n", offset);
+    printf("Frame Number from Page Table = %d\n", frameNumber);
+    printf("Physical Address = (Frame %d * %d) + %d = %d\n",
+           frameNumber, PAGE_SIZE, offset, physicalAddress);
+
+    return 0;
+}
