@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_P 100
+#define MAX_R 100
+
+int main() {
+    int P, R;
+    int Allocation[MAX_P][MAX_R], Max[MAX_P][MAX_R], Need[MAX_P][MAX_R];
+    int Available[MAX_R];
+    bool Finish[MAX_P] = {false};
+    int SafeSequence[MAX_P];
+    int i, j;
+
+    printf("Enter processes and resources: ");
+    scanf("%d %d", &P, &R);
+
+    printf("Enter Allocation matrix:\n");
+    for (i = 0; i < P; i++) {
+        for (j = 0; j < R; j++) {
+            scanf("%d", &Allocation[i][j]);
+        }
+    }
+
+    printf("Enter Max matrix:\n");
+    for (i = 0; i < P; i++) {
+        for (j = 0; j < R; j++) {
+            scanf("%d", &Max[i][j]);
+            Need[i][j] = Max[i][j] - Allocation[i][j];
+        }
+    }
+
+    printf("Enter Available vector:\n");
+    for (j = 0; j < R; j++) {
+        scanf("%d", &Available[j]);
+    }
+
+    int count = 0;
+    bool found;
+
+    while (count < P) {
+        found = false;
+
+        for (i = 0; i < P; i++) {
+            if (!Finish[i]) {
+                bool canProceed = true;
+
+                for (j = 0; j < R; j++) {
+                    if (Need[i][j] > Available[j]) {
+                        canProceed = false;
+                        break;
+                    }
+                }
+
+                if (canProceed) {
+                    for (j = 0; j < R; j++) {
+                        Available[j] += Allocation[i][j];
+                    }
+                    SafeSequence[count++] = i;
+                    Finish[i] = true;
+                    found = true;
+                }
+            }
+        }
+
+        if (!found) {
+            break;
+        }
+    }
+
+    if (count == P) {
+        printf("No deadlock\n");
+        printf("Safe sequence: ");
+        for (i = 0; i < P; i++) {
+            printf("P%d ", SafeSequence[i]);
+        }
+        printf("\n");
+    } else {
+        printf("Deadlock: ");
+        for (i = 0; i < P; i++) {
+            if (!Finish[i]) {
+                printf("P%d ", i);
+            }
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
