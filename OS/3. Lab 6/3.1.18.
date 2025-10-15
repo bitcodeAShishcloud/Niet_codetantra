@@ -1,0 +1,93 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX 100
+
+int compare(const void *a, const void *b) {
+    return (*(int *)a - *(int *)b);
+}
+
+int main() {
+    int n, i, diskSize, head;
+    int requests[MAX], left[MAX], right[MAX];
+    int lCount = 0, rCount = 0;
+    int seekSequence[MAX * 2]; // Store the full sequence
+    int seqIndex = 0;
+    int totalSeek = 0;
+
+    printf("Enter number of disk requests: ");
+    scanf("%d", &n);
+
+    printf("Enter the disk requests (space separated): ");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &requests[i]);
+    }
+
+    printf("Enter initial head position: ");
+    scanf("%d", &head);
+
+    printf("Enter disk size (max cylinder number): ");
+    scanf("%d", &diskSize);
+
+    // Divide requests
+    for (i = 0; i < n; i++) {
+        if (requests[i] < head) {
+            left[lCount++] = requests[i];
+        } else {
+            right[rCount++] = requests[i];
+        }
+    }
+
+    qsort(left, lCount, sizeof(int), compare);
+    qsort(right, rCount, sizeof(int), compare);
+
+    int current = head;
+    seekSequence[seqIndex++] = head;
+
+    // Move right first
+    for (i = 0; i < rCount; i++) {
+        totalSeek += abs(right[i] - current);
+        current = right[i];
+        seekSequence[seqIndex++] = current;
+    }
+
+    // Go to end of disk if not already
+    if (current != diskSize) {
+        totalSeek += abs(diskSize - current);
+        current = diskSize;
+        seekSequence[seqIndex++] = current;  // Append disk end
+    }
+
+    // Jump to beginning
+    totalSeek += current;  // current is diskSize, jumping to 0
+    current = 0;
+    seekSequence[seqIndex++] = current;
+
+    // Now go left
+    for (i = 0; i < lCount; i++) {
+        totalSeek += abs(left[i] - current);
+        current = left[i];
+        seekSequence[seqIndex++] = current;
+    }
+
+    // Output sequence
+    printf("Seek Sequence: ");
+    for (i = 0; i < seqIndex; i++) {
+        printf("%d", seekSequence[i]);
+
+        // Match expected inline format:
+        if (i + 1 < seqIndex) {
+            if (seekSequence[i] == diskSize)
+                printf(" (Jump to end)");
+            if (seekSequence[i] == 0 && seekSequence[i - 1] == diskSize)
+                printf(" (Jump to start)");
+
+            printf(" -> ");
+        }
+    }
+    printf("\n");
+
+    printf("Total Seek Operations: %d\n", totalSeek);
+
+    return 0;
+}
