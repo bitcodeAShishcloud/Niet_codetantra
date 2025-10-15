@@ -1,0 +1,118 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX 20
+#define DISK_SIZE 200
+
+// Comparator for qsort
+int compare(const void *a, const void *b) {
+    return (*(int *)a - *(int *)b);
+}
+
+int main() {
+    int n, i, j;
+    int requests[MAX], seekSequence[MAX + 2]; // +2 for adding 0 or 199 if needed
+    int head, totalSeek = 0, count = 0;
+    char direction[10];
+
+    printf("Enter number of disk requests (max 20): ");
+    scanf("%d", &n);
+
+    if (n > MAX) {
+        printf("Too many requests. Max is %d.\n", MAX);
+        return 1;
+    }
+
+    printf("Enter the disk requests (space separated): ");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &requests[i]);
+        if (requests[i] < 0 || requests[i] >= DISK_SIZE) {
+            printf("Invalid request: %d. Must be between 0 and 199.\n", requests[i]);
+            return 1;
+        }
+    }
+
+    printf("Enter initial head position (0-199): ");
+    scanf("%d", &head);
+    if (head < 0 || head >= DISK_SIZE) {
+        printf("Invalid head position.\n");
+        return 1;
+    }
+
+    printf("Enter direction (left/right): ");
+    scanf("%s", direction);
+
+    // Add head to the request list for easier processing
+    requests[n++] = head;
+
+    // Sort the request array
+    qsort(requests, n, sizeof(int), compare);
+
+    // Find the index of head in sorted array
+    int headIndex = 0;
+    for (i = 0; i < n; i++) {
+        if (requests[i] == head) {
+            headIndex = i;
+            break;
+        }
+    }
+
+    printf("Total Seek Operations: ");
+
+    if (strcmp(direction, "left") == 0) {
+        // Move left first
+        // Service requests to the left of head
+        for (i = headIndex - 1; i >= 0; i--) {
+            seekSequence[count++] = requests[i];
+        }
+
+        // If head is not at 0, move to 0 (end of disk in that direction)
+        if (requests[0] != 0) {
+            seekSequence[count++] = 0;
+        }
+
+        // Then move right and service the remaining
+        for (i = headIndex + 1; i < n; i++) {
+            seekSequence[count++] = requests[i];
+        }
+
+    } else if (strcmp(direction, "right") == 0) {
+        // Move right first
+        for (i = headIndex + 1; i < n; i++) {
+            seekSequence[count++] = requests[i];
+        }
+
+        // If head is not at 199, move to 199 (end of disk)
+        if (requests[n - 1] != DISK_SIZE - 1) {
+            seekSequence[count++] = DISK_SIZE - 1;
+        }
+
+        // Then move left and service remaining
+        for (i = headIndex - 1; i >= 0; i--) {
+            seekSequence[count++] = requests[i];
+        }
+
+    } else {
+        printf("Invalid direction. Must be 'left' or 'right'.\n");
+        return 1;
+    }
+
+    // Calculate total seek operations
+    int current = head;
+    totalSeek = 0;
+    for (i = 0; i < count; i++) {
+        totalSeek += abs(seekSequence[i] - current);
+        current = seekSequence[i];
+    }
+
+    printf("%d\n", totalSeek);
+
+    printf("Seek Sequence: ");
+    for (i = 0; i < count; i++) {
+        printf("%d ", seekSequence[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
