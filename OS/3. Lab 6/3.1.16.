@@ -1,0 +1,72 @@
+#include <stdio.h>
+
+#define MAX_PAGES 100
+
+int predict(int pages[], int frame[], int n, int index, int frames) {
+    int farthest = index;
+    int result = -1;
+
+    for (int i = 0; i < frames; i++) {
+        int j;
+        for (j = index; j < n; j++) {
+            if (frame[i] == pages[j]) {
+                if (j > farthest) {
+                    farthest = j;
+                    result = i;
+                }
+                break;
+            }
+        }
+        // If a page is never used again
+        if (j == n) {
+            return i;
+        }
+    }
+
+    return (result == -1) ? 0 : result;
+}
+
+int main() {
+    int n, pages[MAX_PAGES], frames, frame[MAX_PAGES];
+    int count = 0, pageFaults = 0;
+
+    printf("Enter number of pages: ");
+    scanf("%d", &n);
+
+    printf("Enter the page reference string: ");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &pages[i]);
+    }
+
+    printf("Enter number of frames: ");
+    scanf("%d", &frames);
+
+    for (int i = 0; i < frames; i++) {
+        frame[i] = -1;
+    }
+
+    for (int i = 0; i < n; i++) {
+        int found = 0;
+
+        // Check if page is already in frame
+        for (int j = 0; j < frames; j++) {
+            if (frame[j] == pages[i]) {
+                found = 1;
+                break;
+            }
+        }
+
+        if (!found) {
+            if (count < frames) {
+                frame[count++] = pages[i];
+            } else {
+                int pos = predict(pages, frame, n, i + 1, frames);
+                frame[pos] = pages[i];
+            }
+            pageFaults++;
+        }
+    }
+
+    printf("Total Page Faults = %d\n", pageFaults);
+    return 0;
+}
