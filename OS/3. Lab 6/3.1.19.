@@ -1,0 +1,81 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX 100
+
+// Comparator function for qsort
+int compare(const void* a, const void* b) {
+    return (*(int*)a - *(int*)b);
+}
+
+int main() {
+    int n, head, direction;
+    int requests[MAX], left[MAX], right[MAX];
+    int lCount = 0, rCount = 0;
+    int totalSeek = 0;
+    int current;
+
+    printf("Enter the number of disk requests: ");
+    scanf("%d", &n);
+
+    printf("Enter the disk requests (in track numbers):\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &requests[i]);
+    }
+
+    printf("Enter the initial head position: ");
+    scanf("%d", &head);
+
+    printf("Enter the direction (1 for right, 0 for left): ");
+    scanf("%d", &direction);
+
+    // Split into left and right of head
+    for (int i = 0; i < n; i++) {
+        if (requests[i] < head) {
+            left[lCount++] = requests[i];
+        } else {
+            right[rCount++] = requests[i];
+        }
+    }
+
+    // Sort both halves
+    qsort(left, lCount, sizeof(int), compare);
+    qsort(right, rCount, sizeof(int), compare);
+
+    printf("Seek sequence:\n");
+    current = head;
+    printf("%d", current);
+
+    if (direction == 1) {
+        // Move right first
+        for (int i = 0; i < rCount; i++) {
+            totalSeek += abs(right[i] - current);
+            current = right[i];
+            printf(" -> %d", current);
+        }
+        // Then move left
+        for (int i = lCount - 1; i >= 0; i--) {
+            totalSeek += abs(left[i] - current);
+            current = left[i];
+            printf(" -> %d", current);
+        }
+    } else {
+        // Move left first
+        for (int i = lCount - 1; i >= 0; i--) {
+            totalSeek += abs(left[i] - current);
+            current = left[i];
+            printf(" -> %d", current);
+        }
+        // Then move right
+        for (int i = 0; i < rCount; i++) {
+            totalSeek += abs(right[i] - current);
+            current = right[i];
+            printf(" -> %d", current);
+        }
+    }
+
+    printf(" -> End\n");
+    printf("Total seek time: %d\n", totalSeek);
+
+    return 0;
+}
