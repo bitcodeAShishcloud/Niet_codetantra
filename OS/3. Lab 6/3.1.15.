@@ -1,0 +1,66 @@
+#include <stdio.h>
+
+#define MAX_PAGES 100
+
+int findLRU(int time[], int n) {
+    int min = time[0], pos = 0;
+    for (int i = 1; i < n; i++) {
+        if (time[i] < min) {
+            min = time[i];
+            pos = i;
+        }
+    }
+    return pos;
+}
+
+int main() {
+    int n, pages[MAX_PAGES], frames, frame[MAX_PAGES];
+    int time[MAX_PAGES];
+    int count = 0, pageFaults = 0, currentTime = 0;
+
+    printf("Enter number of pages: ");
+    scanf("%d", &n);
+
+    printf("Enter the page reference string: ");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &pages[i]);
+    }
+
+    printf("Enter number of frames: ");
+    scanf("%d", &frames);
+
+    for (int i = 0; i < frames; i++) {
+        frame[i] = -1;
+    }
+
+    for (int i = 0; i < n; i++) {
+        int found = 0;
+
+        // Check if page is already in frame
+        for (int j = 0; j < frames; j++) {
+            if (frame[j] == pages[i]) {
+                found = 1;
+                time[j] = currentTime++;
+                break;
+            }
+        }
+
+        // Page not found - page fault
+        if (!found) {
+            int pos = -1;
+
+            if (count < frames) {
+                pos = count++;
+            } else {
+                pos = findLRU(time, frames);
+            }
+
+            frame[pos] = pages[i];
+            time[pos] = currentTime++;
+            pageFaults++;
+        }
+    }
+
+    printf("Total Page Faults = %d\n", pageFaults);
+    return 0;
+}
